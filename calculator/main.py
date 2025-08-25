@@ -1,50 +1,23 @@
 import sys
-import os
-from google import genai
-from google.genai import types
-from dotenv import load_dotenv
+from pkg.calculator import Calculator
+from pkg.render import render
 
 
 def main():
-    load_dotenv()
+    calculator = Calculator()
+    if len(sys.argv) <= 1:
+        print("Calculator App")
+        print('Usage: python main.py "<expression>"')
+        print('Example: python main.py "3 + 5"')
+        return
 
-    verbose = "--verbose" in sys.argv
-    args = []
-    for arg in sys.argv[1:]:
-        if not arg.startswith("--"):
-            args.append(arg)
-
-    if not args:
-        print("AI Code Assistant")
-        print('\nUsage: python main.py "your prompt here" [--verbose]')
-        print('Example: python main.py "How do I build a calculator app?"')
-        sys.exit(1)
-
-    api_key = os.environ.get("GEMINI_API_KEY")
-    client = genai.Client(api_key=api_key)
-
-    user_prompt = " ".join(args)
-
-    if verbose:
-        print(f"User prompt: {user_prompt}\n")
-
-    messages = [
-        types.Content(role="user", parts=[types.Part(text=user_prompt)]),
-    ]
-
-    generate_content(client, messages, verbose)
-
-
-def generate_content(client, messages, verbose):
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-001",
-        contents=messages,
-    )
-    if verbose:
-        print("Prompt tokens:", response.usage_metadata.prompt_token_count)
-        print("Response tokens:", response.usage_metadata.candidates_token_count)
-    print("Response:")
-    print(response.text)
+    expression = " ".join(sys.argv[1:])
+    try:
+        result = calculator.evaluate(expression)
+        to_print = render(expression, result)
+        print(to_print)
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 if __name__ == "__main__":
